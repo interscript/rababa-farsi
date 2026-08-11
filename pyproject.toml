@@ -1,0 +1,22 @@
+[project]
+name = "persian-diacrit"
+version = "0.1.0"
+description = "Persian/Farsi diacritization — add harakat (short vowels) and detect ezafe"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.4,<3",
+    "numpy>=1.26,<3",
+    "omegaconf>=2.3,<3",
+    "pyyaml>=6.0",
+    "tqdm>=4.66",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/persian_diacrit"]
