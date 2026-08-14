@@ -1,0 +1,136 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\title{HomoRich Dual-Use: Persian G2P at SOTA Homograph Accuracy and\\ Diacritization from a G2P-Only Dataset}
+\author{Interscript ML Team}
+\date{August 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The HomoRich dataset (528K sentences) was published for Persian
+grapheme-to-phoneme conversion with homograph disambiguation; the strongest
+published system, Homo-GE2PE, reaches 76.89\% homograph accuracy on the
+curated SentenceBench benchmark. We make two contributions. First, a plain
+ByT5-small seq2seq model trained on HomoRich's simple phoneme field matches
+the published SOTA on its own benchmark (77.3\% ezafe-normalized; 89.5\% on
+a natural-distribution split), without the task-specific architecture or
+representation engineering. Second, we show HomoRich has a second,
+unpublished use: its \texttt{Mapped Phoneme} field deterministically
+converts to full haraqat diacritization, from which we train a Persian
+diacritizer reaching \textbf{0.52\% character error rate}---to our
+knowledge the first Persian diacritization model trained without any
+diacritization-specific corpus. We also document a metric pitfall:
+homograph accuracy, PER, and CER are frequently compared across papers as
+if interchangeable; they measure different things.
+\end{abstract}
+
+\section{Introduction}
+Persian omits short vowels in script; G2P must resolve them (and the
+unwritten ezafe) for TTS and transliteration. The HomoRich line of work
+\cite{homorich} frames the challenge as homograph disambiguation.
+
+Contributions:
+\begin{enumerate}
+  \item \textbf{SOTA homograph accuracy without task-specific design}:
+        ByT5-small on the simple phoneme field reaches 77.34\%
+        (ezafe-normalized) on SentenceBench, matching Homo-GE2PE's
+        76.89\%, and 89.45\% on a natural split.
+  \item \textbf{HomoRich dual-use}: deterministic conversion of the
+        \texttt{Mapped Phoneme} byte-pair format into haraqat yields
+        464K diacritization pairs; a ByT5-base trained on them reaches
+        \textbf{0.52\% CER}.
+  \item \textbf{Model-size saturation}: ByT5-small (300M) $\approx$
+        ByT5-base (1.2B) on this task family.
+  \item \textbf{Metric analysis}: exact vs.\ ezafe-normalized homograph
+        scoring changes results by 18 points; we release both numbers and
+        the protocol.
+\end{enumerate}
+
+\section{Related Work}
+``Fast, Not Fancy'' \cite{homorich} introduces HomoRich, Homo-GE2PE
+(T5-based, 76.89\% HA), and HomoFast eSpeak (rule-based, 74.53\%).
+
+\section{Data}
+HomoRich-G2P-Persian: 528,875 sentences, each with the plain
+\texttt{Phoneme} romanization, the byte-pair \texttt{Mapped Phoneme},
+and homograph annotations. Splits: 507K/10.6K/10.6K (random, seed 42).
+
+\subsection{Diacritization derivation}
+The \texttt{Mapped Phoneme} format (e.g.\ \texttt{ruye1 divar
+n/nevisid}) encodes stress digits and syllable breaks. We parse it
+deterministically into haraqat on the original graphemes
+(\texttt{scripts/extract\_diacritics.py}), keeping 464,445 pairs.
+
+\section{Models}
+ByT5-small and ByT5-base, seq2seq, 2--3 epochs, beam 4. Identical
+hyperparameters for G2P and diacritization apart from output space.
+
+\section{Experiments}
+\subsection{G2P and homograph disambiguation}
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+System & HA (SentenceBench) & HA (our split) & CER (our split) \\
+\midrule
+Homo-GE2PE (published) & 76.89\% & --- & --- \\
+HomoFast eSpeak (published) & 74.53\% & --- & --- \\
+\textbf{Ours, exact} & 59.11\% & \textbf{89.45\%} & 1.64\% \\
+\textbf{Ours, ezafe-normalized} & \textbf{77.34\%} & --- & --- \\
+\bottomrule
+\end{tabular}
+\caption{Ezafe normalization strips the connective /e/ our model attaches
+to words (\emph{qadre} vs.\ reference \emph{qadar}); it is required
+because our model was trained on the plain phoneme representation, which
+marks ezafe inline.}
+\end{table}
+
+\subsection{Diacritization}
+\begin{table}[h]
+\centering
+\begin{tabular}{lc}
+\toprule
+Task & CER \\
+\midrule
+Persian diacritization (derived labels, 464K) & \textbf{0.52\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Model size}
+ByT5-small: CER 1.64\%, PER 6.18\%, EM 63.8\%. ByT5-base: CER 1.62\%,
+PER 6.24\%, EM 63.4\%. The task saturates at 300M parameters.
+
+\section{Discussion}
+\textbf{One dataset, two tasks.} The diacritization result is the more
+striking: no Persian diacritization corpus of comparable size exists, yet
+HomoRich's auxiliary field provides one for free.
+
+\textbf{Metrics are not interchangeable.} Homograph accuracy scores one
+word per sentence; PER/CER score everything; representation choices
+(ezafe marking) silently shift HA by 18 points. Cross-paper comparisons
+require stating protocol---we release our HA implementation.
+
+\section{Limitations}
+Our SentenceBench comparison relies on a single normalization (ezafe
+stripping); a model trained on the GE2PE representation (Repr.~2) could
+be evaluated exactly. SentenceBench is small (203 scored homographs).
+
+\section{Reproducibility}
+\texttt{interscript/rababa-farsi}: training (\texttt{modal\_app.py},
+\texttt{modal\_app\_diacrit.py}), HA protocol
+(\texttt{eval\_homograph.py}, \texttt{eval\_sentencebench.py}), label
+derivation (\texttt{scripts/extract\_diacritics.py}),
+\texttt{docs/RESULTS.md}.
+
+\begin{thebibliography}{9}
+\bibitem{homorich} Qharabagh et al. Fast, Not Fancy: Rethinking G2P with
+Rich Data and Rule-Based Models. arXiv:2505.12973, 2025.
+\bibitem{byt5} Xue et al. ByT5. 2022.
+\end{thebibliography}
+
+\end{document}
