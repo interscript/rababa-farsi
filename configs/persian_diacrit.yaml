@@ -25,11 +25,11 @@ model:
   batch_size: 32
 
 train:
-  epochs: 15
-  batch_size: 32
+  epochs: 5
+  batch_size: 64
   learning_rate: 3.0e-4
   weight_decay: 0.01
-  warmup_steps: 500
+  warmup_steps: 1000
   grad_clip: 1.0
   fp16: true
   label_smoothing: 0.1

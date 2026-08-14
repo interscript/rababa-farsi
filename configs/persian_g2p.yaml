@@ -1,0 +1,30 @@
+# persian_g2p — Persian/Farsi G2P with ByT5-base.
+#
+# Real Persian data: HomoRich-G2P-Persian (528K sentence pairs).
+# Task: Persian text -> Latin phonemes (romanization / transliteration).
+#
+# This replaces the cross-lingual Arabic haraqat approach with proper
+# Persian-specific G2P, the same way we approached Thai G2P.
+
+name: persian_g2p
+description: Persian G2P (Persian text -> Latin phonemes) with ByT5-base
+kind: persian
+tier: 1
+
+data:
+  root: /datasets/persian-g2p
+  max_len: 512
+
+model:
+  model_name: google/byt5-base
+  max_len: 512
+
+train:
+  epochs: 2
+  batch_size: 8
+  learning_rate: 3.0e-4
+  weight_decay: 0.01
+  warmup_steps: 500
+  grad_clip: 1.0
+  label_smoothing: 0.1
+  seed: 42
