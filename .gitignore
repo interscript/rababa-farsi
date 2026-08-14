@@ -14,3 +14,6 @@ models/
 .mypy_cache/
 .pytest_cache/
 .DS_Store
+
+# Large JSONL datasets — fetched via scripts/convert_*.py
+data/*.jsonl
