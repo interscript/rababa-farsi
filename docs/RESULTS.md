@@ -66,3 +66,20 @@ Phoneme` field deterministically yields full haraqat annotation.
 3. **Metric non-comparability is endemic**: HomoRich's 76.89% scores one
    homograph per sentence; PER/CER score everything. Comparisons require
    implementing the HA protocol explicitly.
+
+## G2P v3–v5 ablation series (2026-08-16)
+
+| Run | Config | SB ezafe-norm | Our-split CER | Note |
+|---|---|---|---|---|
+| v1 (standing best) | plain Phoneme, 3ep linear | **77.34%** | 1.64% | production model |
+| v3 | dual-task + cosine 3ep | 74.75% | 1.40% | dual-task hurts homographs |
+| v4 | plain, 5ep cosine | 74.88% | 1.43% | more training hurts homographs |
+| v5 | Mapped Phoneme (Repr 2) | 28.22%* | 16.65%* | *repr mismatch: @/? tokens, syllable marks survive two normalization passes |
+
+Findings: (1) homograph accuracy peaks at v1's early-stopped linear recipe
+— both longer training and auxiliary-task regularization trade ~2.5 SB
+points for better CER; (2) the two HomoRich representations are NOT
+interchangeable under simple normalization — scoring a Repr-2 model
+against plain refs requires their exact decoding table; recorded as a
+metric-interoperability negative result for the paper. Next lever: RAG
+homograph evidence on v1 (TODO.research/05), not more recipe roulette.
