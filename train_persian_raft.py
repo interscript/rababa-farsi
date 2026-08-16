@@ -54,6 +54,7 @@ image = (
         "pandas",
         "tqdm",
     )
+    .env({"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
 )
 
 app = modal.App("persian-g2p-raft", image=image)
@@ -218,8 +219,8 @@ def run() -> dict:
         samples: list[list[str]] = [[] for _ in srcs]
         model.eval()
         with torch.no_grad():
-            for i in range(0, len(srcs), 32):
-                batch = srcs[i : i + 32]
+            for i in range(0, len(srcs), 16):
+                batch = srcs[i : i + 16]
                 enc = tokenizer(
                     batch, return_tensors="pt", padding=True,
                     truncation=True, max_length=MAX_LEN,
@@ -235,7 +236,7 @@ def run() -> dict:
                 decoded = tokenizer.batch_decode(s, skip_special_tokens=True)
                 for j in range(len(batch)):
                     samples[i + j] = decoded[j * K : (j + 1) * K]
-                if (i // 32) % 25 == 0:
+                if (i // 16) % 50 == 0:
                     print(f"[iter{it}] sampled {i + len(batch)}/{len(srcs)}", flush=True)
 
         winners: list[tuple[str, str]] = []
@@ -255,6 +256,7 @@ def run() -> dict:
                     for i, f in enumerate(flags)
                 ):
                     hg_wins += 1
+        torch.cuda.empty_cache()  # release sampling KV-cache before training
         print(f"[iter{it}] kept {len(winners)}/{len(srcs)} winners ({hg_wins} homograph fixes)", flush=True)
         if not winners:
             iter_marker.touch()
@@ -264,7 +266,8 @@ def run() -> dict:
         args = Seq2SeqTrainingArguments(
             output_dir=str(raft_dir / f"iter{it}"),
             num_train_epochs=1,
-            per_device_train_batch_size=32,
+            per_device_train_batch_size=8,
+            gradient_accumulation_steps=4,
             bf16=True,
             learning_rate=LR,
             lr_scheduler_type="cosine",
