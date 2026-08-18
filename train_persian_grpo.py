@@ -28,8 +28,8 @@ BASE = "/checkpoints/persian_g2p/run-001/best"
 DATA = Path("/datasets/persian-g2p")
 STEPS = 800
 GROUP = 8
-PROMPTS_PER_STEP = 4
-GRAD_ACCUM = 4
+PROMPTS_PER_STEP = 2
+GRAD_ACCUM = 8
 TEMP = 1.0
 LR = 1e-5
 KL_BETA = 0.05
@@ -47,6 +47,7 @@ SENTENCEBENCH_URL = (
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .pip_install("torch==2.5.1", "transformers==4.46.3", "editdistance", "pandas", "tqdm")
+    .env({"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"})
 )
 
 app = modal.App("persian-g2p-grpo", image=image)
