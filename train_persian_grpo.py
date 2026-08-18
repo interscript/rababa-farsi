@@ -91,7 +91,7 @@ def word_reward(pred: str, gold: str, flags: list[bool]) -> float:
 
 
 @app.function(
-    gpu="A10G",
+    gpu="A100",
     timeout=11 * 60 * 60,
     volumes={"/datasets": datasets_volume, "/checkpoints": checkpoints_volume},
 )
