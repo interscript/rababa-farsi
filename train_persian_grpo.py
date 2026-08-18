@@ -168,6 +168,9 @@ def run() -> dict:
             if (ckpt / "optimizer.pt").exists():
                 opt.load_state_dict(torch.load(str(ckpt / "optimizer.pt"), map_location="cpu"))
             print(f"[resume] step {start_step}", flush=True)
+    if (run_dir / "FINISH_ONLY").exists():
+        start_step = STEPS
+        print("[finish-only] skipping remaining steps; benchmarking saved best", flush=True)
     if best_dev is None:
         best_dev = dev_reward()
         print(f"[dev] v1 baseline reward={best_dev:.4%}", flush=True)
@@ -291,6 +294,20 @@ def run() -> dict:
     (run_dir / "EVAL_DONE").touch()
     checkpoints_volume.commit()
     return results
+
+
+@app.function(volumes={"/checkpoints": checkpoints_volume})
+def mark_finish() -> str:
+    p = Path("/checkpoints") / RUN / "FINISH_ONLY"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.touch()
+    checkpoints_volume.commit()
+    return str(p)
+
+
+@app.local_entrypoint()
+def mark_finish_only():
+    print(mark_finish.remote())
 
 
 @app.local_entrypoint()
