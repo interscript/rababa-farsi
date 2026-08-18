@@ -83,3 +83,23 @@ interchangeable under simple normalization — scoring a Repr-2 model
 against plain refs requires their exact decoding table; recorded as a
 metric-interoperability negative result for the paper. Next lever: RAG
 homograph evidence on v1 (TODO.research/05), not more recipe roulette.
+
+## GRPO on v1 — negative result (2026-08-18, run-001)
+
+G=8 samples/prompt, homograph-weighted (3.0x) gold reward, KL leash
+0.05 to frozen v1, 800 steps on A100. Dev reward degraded monotonically
+past step 200 (3.7132% -> 4.3955%); the BEST checkpoint (step 200)
+scored the final SentenceBench one-shot:
+
+| Model | SB exact | SB ezafe-norm |
+|---|---|---|
+| v1 baseline | 58.13% | **77.34%** |
+| GRPO best (step 200) | 57.14% | 75.37% |
+
+RL policy-sharpening is NET NEGATIVE on Persian v1 — -1.97 SB points at
+its best, consistent with the cross-language RAFT tie: positive-only or
+sequence-level updates cannot sharpen a posterior already at SFT
+convergence; the sequence reward smears credit over copied graphemes
+(GTPO's diagnosis, arXiv 2508.04349). Next lever stays RAG homograph
+evidence (TODO.research/05). GTPO-weighted GRPO v2 only if the Arabic
+GTPO run (in flight) moves.
