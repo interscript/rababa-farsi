@@ -74,14 +74,16 @@ Phoneme` field deterministically yields full haraqat annotation.
 | v1 (standing best) | plain Phoneme, 3ep linear | **77.34%** | 1.64% | production model |
 | v3 | dual-task + cosine 3ep | 74.75% | 1.40% | dual-task hurts homographs |
 | v4 | plain, 5ep cosine | 74.88% | 1.43% | more training hurts homographs |
-| v5 | Mapped Phoneme (Repr 2) | 28.22%* | 16.65%* | *repr mismatch: @/? tokens, syllable marks survive two normalization passes |
+| v5 | Mapped Phoneme (Repr 2) | 28.22%* / **71.29%** decoded | 16.65%* | *raw score is a repr artifact; re-scored 2026-08-19 with a data-derived Mapped→Plain decoding table (`eval_persian_v5_rescore.py`, 114,869 entries from 528,837 aligned HomoRich rows, 4,352 majority-vote collisions): 53.47% exact / 71.29% ezafe-norm |
 
 Findings: (1) homograph accuracy peaks at v1's early-stopped linear recipe
 — both longer training and auxiliary-task regularization trade ~2.5 SB
 points for better CER; (2) the two HomoRich representations are NOT
-interchangeable under simple normalization — scoring a Repr-2 model
-against plain refs requires their exact decoding table; recorded as a
-metric-interoperability negative result for the paper. Next lever: RAG
+interchangeable under simple normalization — even with the exact
+decoding table, v5-decoded (71.29%) stays 6 points under v1 (77.34%):
+Repr 2 destroys stress/vowel-length case distinctions (the 4,352
+collision entries) AND weakens the underlying disambiguation. Mapped
+repr is a closed negative, not a protocol bug. Next lever: RAG
 homograph evidence on v1 (TODO.research/05), not more recipe roulette.
 
 ## GRPO on v1 — negative result (2026-08-18, run-001)
