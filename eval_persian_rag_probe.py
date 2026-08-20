@@ -84,9 +84,13 @@ def probe() -> dict:
         for l in Path("/opt/persian/data-v3/train.jsonl").read_text(encoding="utf-8").splitlines()
         if l.strip()
     ]
+    # contamination guard: exact test sentences are EXCLUDED from retrieval
+    test_srcs = {r["grapheme"].strip() for r in hg_rows}
     train_srcs = {r["src"].strip() for r in train}
-    for row in hg_rows:  # contamination guard
-        assert row["grapheme"].strip() not in train_srcs, "test sentence leaked into train corpus"
+    overlap = test_srcs & train_srcs
+    if overlap:
+        print(f"[contam] {len(overlap)} test sentences also appear in train — excluded from retrieval", flush=True)
+        train = [r for r in train if r["src"].strip() not in test_srcs]
 
     # index train by homograph token
     by_token: dict[str, list[int]] = {}
